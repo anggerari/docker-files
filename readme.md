@@ -11,4 +11,4 @@ then run the script using bash
 bash run-docker.sh
 ```
 
-fyi just simple configuration for localhost so feel free to contribute 👋
+fyi just simple docker-compose.yaml configuration for localhost so feel free to contribute 👋
