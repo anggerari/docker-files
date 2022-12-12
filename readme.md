@@ -17,7 +17,7 @@ https://docs.docker.com/engine/installation/linux/docker-ce/ubuntu/
 #### Install docker-compose
 
 ```sh
-    sudo apt install docker-compose
+sudo apt install docker-compose
 ```
 
 ### Running docker-compose file
@@ -35,7 +35,7 @@ bash run-docker.sh
 
 ### Stopping docker-compose
 ```sh
-   docker-compose down
+docker-compose down
 ```
 
 fyi just simple docker-compose.yaml configuration for localhost so feel free to contribute 👋
