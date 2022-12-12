@@ -1,0 +1,79 @@
+version: '3.3'
+
+services:
+  postgres:
+    container_name: postgres
+    image: postgis/postgis
+    restart: always
+    env_file:
+      - local.env
+    environment:
+      POSTGRES_USER: ${USERNAME}
+      POSTGRES_PASSWORD: ${PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/postgres/:/var/lib/postgresql/data/
+
+  minio:
+    container_name: minio
+    image: minio/minio
+    command: server /data --console-address ":9001"
+    env_file:
+      - local.env
+    expose:
+      - "9000"
+      - "9001"
+    environment:
+      MINIO_ROOT_USER: ${USERNAME}
+      MINIO_ROOT_PASSWORD: ${PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - ./data/minio/:/data/
+
+  redis:
+    image: redis
+    container_name: redis
+    env_file:
+      - local.env
+    command: redis-server --bind redis --requirepass ${PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes
+    environment:
+      - TZ=Asia/Jakarta
+    volumes:
+      - ./data/redis/:/data/
+    ports:
+      - "6379:6379"
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    env_file:
+      - local.env
+    ports:
+      - '8001:8001'
+    volumes:
+      - ./data/redisinsight/:/data
+
+  nsqlookupd:
+    image: nsqio/nsq
+    command: /nsqlookupd
+    ports:
+      - "4160:4160"
+      - "4161:4161"
+  nsqd:
+    image: nsqio/nsq
+    command: /nsqd --lookupd-tcp-address=nsqlookupd:4160
+    depends_on:
+      - nsqlookupd
+    ports:
+      - "4150:4150"
+      - "4151:4151"
+
+  nsqadmin:
+    image: nsqio/nsq
+    command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
+    depends_on:
+      - nsqlookupd
+    ports:
+      - "4171:4171"
