@@ -113,3 +113,9 @@ services:
       ME_CONFIG_MONGODB_URL: mongodb://${USERNAME}:${PASSWORD}@mongo:27017/
       ME_CONFIG_BASICAUTH_USERNAME: ${USERNAME}
       ME_CONFIG_BASICAUTH_PASSWORD: ${PASSWORD}
+
+  qr:
+    image: samwierema/go-qr-generator
+    ports:
+      - 9010:8080
+    restart: on-failure
