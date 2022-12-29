@@ -34,8 +34,9 @@ services:
       - ./data/minio/:/data/
 
   redis:
-    image: redis
+    image: redis:latest
     container_name: redis
+    restart: on-failure
     env_file:
       - local.env
     command: redis-server --bind redis --requirepass ${PASSWORD} --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes
