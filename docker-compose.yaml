@@ -59,6 +59,7 @@ services:
 
   redisinsight:
     image: redislabs/redisinsight:latest
+    restart: on-failure
     env_file:
       - local.env
     ports:
@@ -68,12 +69,14 @@ services:
 
   nsqlookupd:
     image: nsqio/nsq
+    restart: on-failure
     command: /nsqlookupd
     ports:
       - "4160:4160"
       - "4161:4161"
   nsqd:
     image: nsqio/nsq
+    restart: on-failure
     command: /nsqd --lookupd-tcp-address=nsqlookupd:4160
     depends_on:
       - nsqlookupd
@@ -83,6 +86,7 @@ services:
 
   nsqadmin:
     image: nsqio/nsq
+    restart: on-failure
     command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
     depends_on:
       - nsqlookupd
@@ -92,7 +96,7 @@ services:
   mongo:
     container_name: mongo
     image: mongo
-    restart: always
+    restart: on-failure
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${PASSWORD}
@@ -102,7 +106,7 @@ services:
   mongo-express:
     container_name: mongo-express
     image: mongo-express
-    restart: always
+    restart: on-failure
     ports:
       - "8081:8081"
     depends_on:
