@@ -1,4 +1,15 @@
-data/
-.idea/
-.DS_Store
+# local config & data
+.env
 local.env
+data/
+
+# database dumps - never commit these
+*.sql
+*.sql.gz
+*.dump
+dump/
+
+# editors / OS
+.idea/
+.vscode/
+.DS_Store
