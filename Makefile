@@ -13,7 +13,7 @@ endif
 
 help: ## Show this help
 	@grep -E '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  \033[36m%-8s\033[0m %s\n",$$1,$$2}'
-	@echo "\n  Profiles: postgres redis s3 nsq mongo qr   (e.g. make up p=postgres,redis)"
+	@echo "\n  Profiles: postgres redis s3 nsq mongo mail qr   (e.g. make up p=postgres,redis)"
 
 env: ## Create .env from .env.example if missing
 	@test -f .env || (cp .env.example .env && echo "Created .env - edit it to taste")

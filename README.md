@@ -1,7 +1,7 @@
 # docker-files
 
 **One `docker compose` file for every backend service you need on your laptop.**
-Postgres (with PostGIS + pgvector), Redis, S3-compatible storage, NSQ, MongoDB — each with its admin UI, health checks, and sane defaults. Start only what your project needs.
+Postgres (with PostGIS + pgvector), Redis, S3-compatible storage, NSQ, MongoDB, a fake SMTP inbox — each with its admin UI, health checks, and sane defaults. Start only what your project needs.
 
 [![smoke-test](https://github.com/anggerari/docker-files/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/anggerari/docker-files/actions/workflows/smoke-test.yml)
 ![license](https://img.shields.io/badge/license-MIT-blue)
@@ -39,6 +39,7 @@ That's it — Postgres on `localhost:5432`, pgAdmin on [localhost:5050](http://l
 | `nsq`      | nsqadmin          | 4171            | http://localhost:4171                             | —                              |
 | `mongo`    | MongoDB 8.0       | 27017           | `mongodb://mongo:mongo@localhost:27017`           | `mongo` / `mongo`              |
 | `mongo`    | mongo-express     | 8081            | http://localhost:8081                             | `admin` / `admin`              |
+| `mail`     | [Mailpit](https://mailpit.axllent.org) | 1025 (SMTP) / 8025 | http://localhost:8025 — SMTP at `localhost:1025` | any user / any password |
 | `qr`       | QR code generator | 9010            | http://localhost:9010/?data=hello&size=300        | —                              |
 
 Every port and password can be changed in `.env`.
@@ -105,6 +106,8 @@ aws --endpoint-url http://localhost:9000 s3 cp ./file.txt s3://my-bucket/
 
 Any S3 SDK works the same way — point the endpoint at `http://localhost:9000` and enable path-style addressing.
 
+**Catch outgoing email** — point your app's SMTP settings at `localhost:1025` (no TLS, any username/password). Every email shows up in the Mailpit inbox at [localhost:8025](http://localhost:8025) instead of reaching real people.
+
 **Expose services to your network** (e.g. to test from a phone) — set `BIND_ADDR=0.0.0.0` in `.env`. **Change the default passwords first.**
 
 ## FAQ
@@ -123,7 +126,7 @@ In Docker named volumes (`docker volume ls | grep docker-files`). `make down` ke
 
 ## Contributing
 
-Want another service (Kafka, RabbitMQ, Elasticsearch, Mailpit, …)? PRs are welcome. Please:
+Want another service (Kafka, RabbitMQ, Elasticsearch, Keycloak, …)? PRs are welcome. Please:
 
 1. Add it under its own profile, with pinned image tag, a health check where possible, and ports bound to `${BIND_ADDR}`.
 2. Add its settings to `.env.example` and a row to the table above.
