@@ -7,11 +7,32 @@ updates:
     schedule: { interval: weekly }
     groups:
       images: { patterns: ["*"], update-types: [minor, patch] }
+    ignore:
+      # Major versions of databases change the on-disk format and need a
+      # manual migration, so they're upgraded deliberately, not by a bot.
+      - dependency-name: mongo
+        update-types: [version-update:semver-major]
+      - dependency-name: redis
+        update-types: [version-update:semver-major]
+      - dependency-name: elasticsearch
+        update-types: [version-update:semver-major]
+      - dependency-name: kibana
+        update-types: [version-update:semver-major]
+      - dependency-name: rabbitmq
+        update-types: [version-update:semver-major]
+      - dependency-name: apache/kafka
+        update-types: [version-update:semver-major]
+      # Tag scheme ("1.0.2-20-alpine3.19") confuses Dependabot into downgrades
+      - dependency-name: mongo-express
     commit-message: { prefix: "chore(deps)" }
 
   - package-ecosystem: docker
     directories: [/config/postgres, /config/qr]
     schedule: { interval: weekly }
+    ignore:
+      # "17-3.7" = Postgres 17 + PostGIS 3.7. A Postgres major needs pg_upgrade
+      # and Dependabot reads the PostGIS part wrongly, so update it by hand.
+      - dependency-name: postgis/postgis
     commit-message: { prefix: "chore(deps)" }
 
   - package-ecosystem: github-actions
