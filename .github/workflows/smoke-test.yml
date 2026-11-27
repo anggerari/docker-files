@@ -9,37 +9,76 @@ on:
   workflow_dispatch:
 
 jobs:
-  up:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Compose file is valid
+        run: COMPOSE_PROFILES='*' docker compose config -q
+      - name: Shell scripts are valid
+        run: for f in install.sh scripts/*.sh; do bash -n "$f"; done
+      - name: init + urls work without Docker services running
+        run: |
+          cp .env.example .env
+          scripts/init.sh --profiles '*' --low-memory
+          scripts/urls.sh | grep -q DATABASE_URL
+
+  # Every profile boots in its own job, so one slow image can't hide another's failure
+  profile:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        profile: [postgres, redis, s3, nsq, mongo, mail, qr, kafka, rabbitmq, search, keycloak, observability]
     env:
-      COMPOSE_PROFILES: "*"
+      COMPOSE_PROFILES: ${{ matrix.profile }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Validate compose file
-        run: docker compose config -q
-
-      - name: Start every service and wait for health checks
-        run: docker compose up -d --build --wait --wait-timeout 300
-
-      - name: Check services respond
-        run: |
-          set -e
-          docker compose exec -T postgres psql -U postgres -d app -tAc \
-            "select count(*) from pg_extension where extname in ('postgis','vector')" | grep -q 2
-          docker compose exec -T redis redis-cli ping | grep -q PONG
-          curl -fsS http://127.0.0.1:9001/rustfs/console/health
-          curl -fsS http://127.0.0.1:4171/ >/dev/null
-          curl -fsS "http://127.0.0.1:9010/?data=ci" -o /dev/null
-          curl -fsS http://127.0.0.1:8025/readyz
-          for i in $(seq 30); do curl -fsS http://127.0.0.1:5050/login >/dev/null && break; sleep 2; done
-          curl -fsS http://127.0.0.1:5050/login >/dev/null
-
+      - uses: actions/checkout@v7
+      - name: Start ${{ matrix.profile }} and wait for health checks
+        run: docker compose up -d --build --wait --wait-timeout 400
+      - name: Check it actually works
+        run: scripts/check.sh
       - name: Logs on failure
         if: failure()
-        run: docker compose logs --tail=50
-
+        run: docker compose logs --tail=80
       - name: Tear down
         if: always()
         run: docker compose down -v
+
+  # The examples in examples/ must keep working against the real services
+  examples:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      COMPOSE_PROFILES: postgres,redis,s3,mail,rabbitmq,kafka
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: examples/go/go.mod
+          cache-dependency-path: examples/go/go.sum
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: examples/node/package-lock.json
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: examples/python/requirements.txt
+      - name: Start services
+        run: docker compose up -d --build --wait --wait-timeout 400
+      - name: Go
+        working-directory: examples/go
+        run: go run .
+      - name: Node.js
+        working-directory: examples/node
+        run: npm ci && npm start
+      - name: Python
+        working-directory: examples/python
+        run: pip install -r requirements.txt && python main.py
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --tail=80

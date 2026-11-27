@@ -1,0 +1,38 @@
+# Weekly PRs for new image and library versions. CI boots each changed
+# service before anything is merged, so updates are tested, not blind.
+version: 2
+updates:
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      images: { patterns: ["*"], update-types: [minor, patch] }
+    commit-message: { prefix: "chore(deps)" }
+
+  - package-ecosystem: docker
+    directories: [/config/postgres, /config/qr]
+    schedule: { interval: weekly }
+    commit-message: { prefix: "chore(deps)" }
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: monthly }
+    commit-message: { prefix: "ci" }
+
+  - package-ecosystem: gomod
+    directory: /examples/go
+    schedule: { interval: monthly }
+    groups: { go: { patterns: ["*"] } }
+    commit-message: { prefix: "chore(examples)" }
+
+  - package-ecosystem: npm
+    directory: /examples/node
+    schedule: { interval: monthly }
+    groups: { node: { patterns: ["*"] } }
+    commit-message: { prefix: "chore(examples)" }
+
+  - package-ecosystem: pip
+    directory: /examples/python
+    schedule: { interval: monthly }
+    groups: { python: { patterns: ["*"] } }
+    commit-message: { prefix: "chore(examples)" }
