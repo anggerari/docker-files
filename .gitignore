@@ -13,3 +13,8 @@ dump/
 .idea/
 .vscode/
 .DS_Store
+
+# examples
+node_modules/
+.venv/
+__pycache__/

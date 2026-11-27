@@ -1,0 +1,20 @@
+{
+  "name": "docker-files-example-node",
+  "private": true,
+  "type": "module",
+  "description": "Connects to every docker-files service and does one real operation on each",
+  "scripts": {
+    "start": "node index.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1178.0",
+    "amqplib": "^2.4.2",
+    "kafkajs": "^2.2.4",
+    "nodemailer": "^10.6.1",
+    "pg": "^8.23.1",
+    "redis": "^6.4.0"
+  }
+}
