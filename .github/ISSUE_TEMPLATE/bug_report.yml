@@ -1,0 +1,29 @@
+name: Bug report
+description: A service doesn't start, or doesn't work as documented
+labels: ["bug"]
+body:
+  - type: input
+    id: profile
+    attributes:
+      label: Profile / service
+      placeholder: "e.g. kafka"
+    validations: { required: true }
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Include the command you ran and the output of `make check` if you can.
+    validations: { required: true }
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: "Output of: make logs s=<service>"
+      render: shell
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      description: OS, CPU (Intel / Apple Silicon / ARM), Docker Desktop / OrbStack / Colima / Linux, and RAM given to Docker
+      placeholder: "macOS 15, M2, OrbStack, 8 GB"
+    validations: { required: true }

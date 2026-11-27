@@ -1,0 +1,29 @@
+name: Request a service
+description: Suggest a new service to add to the stack
+title: "feat: add <service>"
+labels: ["new service"]
+body:
+  - type: input
+    id: service
+    attributes:
+      label: Service
+      description: Name and official Docker image
+      placeholder: "e.g. ClickHouse - clickhouse/clickhouse-server"
+    validations: { required: true }
+  - type: textarea
+    id: why
+    attributes:
+      label: What would you use it for?
+      description: Helps decide what goes in the stack and which admin UI to pair it with.
+    validations: { required: true }
+  - type: input
+    id: ui
+    attributes:
+      label: Admin UI (optional)
+      placeholder: "e.g. Tabix, CH-UI"
+  - type: checkboxes
+    id: pr
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to open the PR myself (see CONTRIBUTING.md)
