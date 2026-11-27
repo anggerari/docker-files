@@ -41,7 +41,7 @@ services:
   pgadmin:
     <<: *restart
     container_name: pgadmin
-    image: dpage/pgadmin4:${PGADMIN_TAG:-9.19}
+    image: dpage/pgadmin4:9.19
     profiles: [postgres]
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@example.com}
@@ -60,7 +60,7 @@ services:
   redis:
     <<: *restart
     container_name: redis
-    image: redis:${REDIS_TAG:-8.6-alpine}
+    image: redis:8.6-alpine
     profiles: [redis]
     command:
       - redis-server
@@ -88,7 +88,7 @@ services:
   redisinsight:
     <<: *restart
     container_name: redisinsight
-    image: redis/redisinsight:${REDISINSIGHT_TAG:-3.10.2}
+    image: redis/redisinsight:3.10.2
     profiles: [redis]
     environment:
       RI_REDIS_HOST: redis
@@ -107,7 +107,7 @@ services:
   rustfs:
     <<: *restart
     container_name: rustfs
-    image: rustfs/rustfs:${RUSTFS_TAG:-1.0.7}
+    image: rustfs/rustfs:1.0.7
     profiles: [s3]
     security_opt:
       - no-new-privileges:true
@@ -134,7 +134,7 @@ services:
   nsqlookupd:
     <<: *restart
     container_name: nsqlookupd
-    image: nsqio/nsq:${NSQ_TAG:-v1.3.0}
+    image: nsqio/nsq:v1.3.0
     profiles: [nsq]
     command: /nsqlookupd
     ports:
@@ -149,7 +149,7 @@ services:
   nsqd:
     <<: *restart
     container_name: nsqd
-    image: nsqio/nsq:${NSQ_TAG:-v1.3.0}
+    image: nsqio/nsq:v1.3.0
     profiles: [nsq]
     command: >-
       /nsqd
@@ -173,7 +173,7 @@ services:
   nsqadmin:
     <<: *restart
     container_name: nsqadmin
-    image: nsqio/nsq:${NSQ_TAG:-v1.3.0}
+    image: nsqio/nsq:v1.3.0
     profiles: [nsq]
     command: /nsqadmin --lookupd-http-address=nsqlookupd:4161
     ports:
@@ -186,7 +186,7 @@ services:
   mongo:
     <<: *restart
     container_name: mongo
-    image: mongo:${MONGO_TAG:-8.0}
+    image: mongo:8.0
     profiles: [mongo]
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-mongo}
@@ -195,6 +195,8 @@ services:
       - "${BIND_ADDR:-127.0.0.1}:${MONGO_PORT:-27017}:27017"
     volumes:
       - mongo-data:/data/db
+    # WiredTiger cache defaults to 50% of RAM; keep it small for laptops
+    command: ["--wiredTigerCacheSizeGB", "${MONGO_CACHE_GB:-0.25}"]
     healthcheck:
       test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
       interval: 10s
@@ -205,7 +207,7 @@ services:
   mongo-express:
     <<: *restart
     container_name: mongo-express
-    image: mongo-express:${MONGO_EXPRESS_TAG:-1.0.2-20-alpine3.19}
+    image: mongo-express:1.0.2-20-alpine3.19
     profiles: [mongo]
     environment:
       ME_CONFIG_MONGODB_URL: mongodb://${MONGO_USER:-mongo}:${MONGO_PASSWORD:-mongo}@mongo:27017/
@@ -222,7 +224,7 @@ services:
   mailpit:
     <<: *restart
     container_name: mailpit
-    image: axllent/mailpit:${MAILPIT_TAG:-v1.34.0}
+    image: axllent/mailpit:v1.34.0
     profiles: [mail]
     environment:
       MP_DATABASE: /data/mailpit.db
@@ -236,6 +238,225 @@ services:
     volumes:
       - mailpit-data:/data
     # health check is built into the image (/mailpit readyz)
+
+  # ── Kafka (KRaft, no ZooKeeper) + Redpanda Console ───────────────────
+  kafka:
+    <<: *restart
+    container_name: kafka
+    image: apache/kafka:4.4.0
+    profiles: [kafka]
+    environment:
+      CLUSTER_ID: docker-files-kafka-01
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,INTERNAL://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:${KAFKA_PORT:-9092},INTERNAL://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,INTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_SHARE_COORDINATOR_STATE_TOPIC_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 3
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+      KAFKA_LOG_RETENTION_HOURS: ${KAFKA_RETENTION_HOURS:-24}
+      KAFKA_HEAP_OPTS: -Xms${KAFKA_HEAP:-512m} -Xmx${KAFKA_HEAP:-512m}
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${KAFKA_PORT:-9092}:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null"]
+      interval: 10s
+      timeout: 20s
+      retries: 15
+      start_period: 20s
+
+  kafka-console:
+    <<: *restart
+    container_name: kafka-console
+    image: redpandadata/console:v3.15.0
+    profiles: [kafka]
+    environment:
+      KAFKA_BROKERS: kafka:29092
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${KAFKA_CONSOLE_PORT:-8088}:8080"
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ── RabbitMQ (with management UI) ─────────────────────────────────────
+  rabbitmq:
+    <<: *restart
+    container_name: rabbitmq
+    image: rabbitmq:4.4.1-management-alpine
+    profiles: [rabbitmq]
+    hostname: rabbitmq # data dir is keyed by hostname
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-rabbit}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbit}
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${RABBITMQ_PORT:-5672}:5672"
+      - "${BIND_ADDR:-127.0.0.1}:${RABBITMQ_UI_PORT:-15672}:15672"
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_port_connectivity"]
+      interval: 10s
+      timeout: 10s
+      retries: 15
+      start_period: 15s
+
+  # ── Elasticsearch + Kibana ────────────────────────────────────────────
+  elasticsearch:
+    <<: *restart
+    container_name: elasticsearch
+    image: elasticsearch:9.5.7
+    profiles: [search]
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: -Xms${ES_HEAP:-512m} -Xmx${ES_HEAP:-512m}
+      # Don't go read-only when your laptop disk is >90% full
+      cluster.routing.allocation.disk.threshold_enabled: "false"
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${ES_PORT:-9200}:9200"
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+
+  kibana:
+    <<: *restart
+    container_name: kibana
+    image: kibana:9.5.7
+    profiles: [search]
+    environment:
+      ELASTICSEARCH_HOSTS: '["http://elasticsearch:9200"]'
+      TELEMETRY_OPTIN: "false"
+      NODE_OPTIONS: --max-old-space-size=${KIBANA_HEAP_MB:-768}
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${KIBANA_PORT:-5601}:5601"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:5601/api/status | grep -q '\"level\":\"available\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+
+  # ── Keycloak (auth / OIDC) with a ready-made "dev" realm ─────────────
+  keycloak:
+    <<: *restart
+    container_name: keycloak
+    image: quay.io/keycloak/keycloak:26.8.2
+    profiles: [keycloak]
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HEALTH_ENABLED: "true"
+      JAVA_OPTS_KC_HEAP: -Xms128m -Xmx${KEYCLOAK_HEAP:-512m}
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${KEYCLOAK_PORT:-8080}:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+      - ./config/keycloak/realm-dev.json:/opt/keycloak/data/import/realm-dev.json:ro
+    healthcheck:
+      # image has no curl: talk HTTP over bash's /dev/tcp to the management port
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/9000 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && grep -q UP <&3"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  # ── Observability: Grafana + Prometheus + Loki + Alloy ────────────────
+  prometheus:
+    <<: *restart
+    container_name: prometheus
+    image: prom/prometheus:v3.16.0
+    profiles: [observability]
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-3d}
+      - --web.enable-remote-write-receiver
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - prometheus-data:/prometheus
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9090/-/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  loki:
+    <<: *restart
+    container_name: loki
+    image: grafana/loki:3.7.9
+    profiles: [observability]
+    command: ["-config.file=/etc/loki/config.yaml"]
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${LOKI_PORT:-3100}:3100"
+    volumes:
+      - loki-data:/loki
+      - ./config/loki/config.yaml:/etc/loki/config.yaml:ro
+    # distroless image (no shell/wget), so no health check; `make check` verifies it
+
+  alloy:
+    <<: *restart
+    container_name: alloy
+    image: grafana/alloy:v1.22.0
+    profiles: [observability]
+    command: ["run", "--server.http.listen-addr=0.0.0.0:12345", "--storage.path=/var/lib/alloy/data", "/etc/alloy/config.alloy"]
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${ALLOY_PORT:-12345}:12345"
+    volumes:
+      - ./config/alloy/config.alloy:/etc/alloy/config.alloy:ro
+      # read-only access to Docker so Alloy can ship every container's logs to Loki
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      loki:
+        condition: service_started
+
+  grafana:
+    <<: *restart
+    container_name: grafana
+    image: grafana/grafana:13.2.7
+    profiles: [observability]
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_NEWS_NEWS_FEED_ENABLED: "false"
+    ports:
+      - "${BIND_ADDR:-127.0.0.1}:${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_started
 
   # ── QR code generator ─────────────────────────────────────────────────
   qr:
@@ -256,3 +477,10 @@ volumes:
   nsq-data:
   mongo-data:
   mailpit-data:
+  kafka-data:
+  rabbitmq-data:
+  elasticsearch-data:
+  keycloak-data:
+  prometheus-data:
+  loki-data:
+  grafana-data:
