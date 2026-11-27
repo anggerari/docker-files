@@ -8,6 +8,10 @@ Postgres (PostGIS + pgvector), Redis, S3, Kafka, RabbitMQ, Elasticsearch, Keyclo
 ![license](https://img.shields.io/badge/license-MIT-blue)
 ![docker compose](https://img.shields.io/badge/docker%20compose-v2-2496ED?logo=docker&logoColor=white)
 
+<p align="center">
+  <img src="docs/demo.gif" alt="make init picks services with RAM and disk estimates, make up starts them healthy, make urls prints connection strings, make check verifies each one" width="860">
+</p>
+
 ```sh
 curl -fsSL https://raw.githubusercontent.com/anggerari/docker-files/main/install.sh | bash
 ```
