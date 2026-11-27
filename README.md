@@ -102,6 +102,25 @@ docker compose --profile postgres --profile redis up -d --wait
 COMPOSE_PROFILES='*' docker compose down
 ```
 
+## Which Docker app?
+
+Any Docker with Compose v2 works. On a laptop, the app you run Docker in matters as much as the services you pick:
+
+| Your OS | Recommended | Why |
+| --- | --- | --- |
+| **macOS** | [**OrbStack**](https://orbstack.dev) | A lightweight GUI alternative to Docker Desktop: starts in seconds, uses less RAM, CPU and battery, gives memory back when idle, and shrinks its disk automatically when you delete images. `docker` and `docker compose` work unchanged. Free for personal use; commercial use needs a paid license. This stack is developed and tested on it. |
+| macOS (free, no GUI) | [Colima](https://github.com/abiosoft/colima) | Open source and command-line only: `brew install colima docker docker-compose && colima start` |
+| **Windows** | Docker Desktop with WSL 2, or [Rancher Desktop](https://rancherdesktop.io) | Run commands from a WSL terminal so `make` and the scripts work |
+| **Linux** | Docker Engine | Runs natively, with no virtual machine, so it's the lightest option |
+
+Switching from Docker Desktop to OrbStack on a Mac:
+
+```sh
+brew install orbstack     # or download it from orbstack.dev
+```
+
+OrbStack can import your existing Docker Desktop containers, images and volumes when it first starts. Quit Docker Desktop afterwards so only one is running.
+
 ## Running on a low-spec machine
 
 The stack is built for laptops, but Docker itself needs headroom. Rough guide:
@@ -129,7 +148,7 @@ The stack is built for laptops, but Docker itself needs headroom. Rough guide:
 
 **4. Watch it.** `make stats` shows live memory per container.
 
-**5. Give Docker the right amount.** Docker Desktop: *Settings → Resources → Memory*. OrbStack and Linux use memory dynamically and return it when idle.
+**5. Use a lighter Docker app.** On a Mac, [OrbStack](#which-docker-app) uses noticeably less memory than Docker Desktop and returns it when idle. On Docker Desktop, set the limit under *Settings → Resources → Memory*.
 
 **Heaviest services**: `search` (Elasticsearch + Kibana, ~2.1 GB) and `keycloak` (~570 MB). Need Elasticsearch but not Kibana? `make only s=elasticsearch` with `ES_HEAP=256m`.
 
@@ -144,7 +163,7 @@ Images are the big cost — the full stack is ~14 GB. To keep it small:
 - **Logs and history are capped**: Kafka keeps messages 24 h (`KAFKA_RETENTION_HOURS`), Loki keeps logs 3 days, Prometheus keeps metrics 3 days (`PROMETHEUS_RETENTION`), Mailpit keeps the last 5,000 emails (`MAILPIT_MAX_MESSAGES`).
 - **Elasticsearch won't go read-only** when your disk is >90% full (its usual safety switch is off here, since that's normal on a laptop).
 - **Biggest images**: `search` (~4 GB), `observability` (~3.3 GB), `postgres` (~1.6 GB, PostGIS), `mongo` (~1.6 GB).
-- On a Mac, Docker keeps images inside one virtual disk file. OrbStack shrinks it automatically after you delete images (give it a few minutes); Docker Desktop may take longer to give the space back.
+- On a Mac, Docker keeps images inside one virtual disk file. [OrbStack](#which-docker-app) shrinks it automatically after you delete images (give it a few minutes); Docker Desktop may take longer to give the space back.
 
 ## Examples
 
