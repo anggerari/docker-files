@@ -11,17 +11,17 @@ updates:
       # Major versions of databases change the on-disk format and need a
       # manual migration, so they're upgraded deliberately, not by a bot.
       - dependency-name: mongo
-        update-types: [version-update:semver-major]
+        update-types: ["version-update:semver-major"]
       - dependency-name: redis
-        update-types: [version-update:semver-major]
+        update-types: ["version-update:semver-major"]
       - dependency-name: elasticsearch
-        update-types: [version-update:semver-major]
+        update-types: ["version-update:semver-major"]
       - dependency-name: kibana
-        update-types: [version-update:semver-major]
+        update-types: ["version-update:semver-major"]
       - dependency-name: rabbitmq
-        update-types: [version-update:semver-major]
+        update-types: ["version-update:semver-major"]
       - dependency-name: apache/kafka
-        update-types: [version-update:semver-major]
+        update-types: ["version-update:semver-major"]
       # Tag scheme ("1.0.2-20-alpine3.19") confuses Dependabot into downgrades
       - dependency-name: mongo-express
     commit-message: { prefix: "chore(deps)" }
