@@ -108,7 +108,7 @@ await run("kafka", async () => {
     clientId: "docker-files-example",
     brokers: env("KAFKA_BROKERS", "localhost:9092").split(","),
     logLevel: logLevel.NOTHING,
-    retry: { retries: 0 },
+    retry: { retries: 5, initialRetryTime: 300 }, // a fresh broker is briefly not ready for consumer groups
   });
   const topic = "examples-node";
   const admin = kafka.admin();
