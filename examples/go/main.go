@@ -32,7 +32,8 @@ func env(key, def string) string {
 var failed bool
 
 func run(name string, fn func(ctx context.Context) (string, error)) {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	// a fresh Kafka needs a while for the first consumer group to join
+	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
 	defer cancel()
 	msg, err := fn(ctx)
 	switch {

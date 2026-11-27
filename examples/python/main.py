@@ -110,7 +110,7 @@ def kafka():
     consumer = Consumer({**quiet, "group.id": f"examples-{uuid.uuid4()}", "auto.offset.reset": "earliest"})
     try:
         consumer.subscribe([topic])
-        deadline = time.time() + 15
+        deadline = time.time() + 40  # a fresh Kafka needs a while for the first consumer group to join
         while time.time() < deadline:
             msg = consumer.poll(1)
             if msg and not msg.error():

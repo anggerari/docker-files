@@ -16,7 +16,8 @@ async function run(name, fn) {
   try {
     const msg = await Promise.race([
       fn(),
-      new Promise((_, rej) => setTimeout(() => rej(new Error("timed out")), 15000)),
+      // a fresh Kafka needs a while for the first consumer group to join
+      new Promise((_, rej) => setTimeout(() => rej(new Error("timed out")), 45000)),
     ]);
     console.log(`  ✓ ${name.padEnd(9)} ${msg}`);
   } catch (err) {
