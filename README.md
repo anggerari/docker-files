@@ -1,7 +1,7 @@
 # docker-files
 
-**Your whole backend stack on your laptop, one command away.**
-Postgres (PostGIS + pgvector), Redis, S3, Kafka, RabbitMQ, Elasticsearch, Keycloak, Grafana, MongoDB, a fake SMTP inbox and more — each with its admin UI, health checks and sane defaults. Start only what your project needs, even on an 8 GB laptop.
+**Your whole backend stack on your device, one command away.**
+Postgres (PostGIS + pgvector), Redis, S3, Kafka, RabbitMQ, Elasticsearch, Keycloak, Grafana, MongoDB, a fake SMTP inbox and more — each with its admin UI, health checks and sane defaults. Start only what your project needs, even on an 8 GB device.
 
 [![smoke-test](https://github.com/anggerari/docker-files/actions/workflows/smoke-test.yml/badge.svg)](https://github.com/anggerari/docker-files/actions/workflows/smoke-test.yml)
 [![release](https://img.shields.io/github/v/release/anggerari/docker-files)](https://github.com/anggerari/docker-files/releases)
@@ -104,7 +104,7 @@ COMPOSE_PROFILES='*' docker compose down
 
 ## Which Docker app?
 
-Any Docker with Compose v2 works. On a laptop, the app you run Docker in matters as much as the services you pick:
+Any Docker with Compose v2 works. On a small device, the app you run Docker in matters as much as the services you pick:
 
 | Your OS | Recommended | Why |
 | --- | --- | --- |
@@ -123,7 +123,7 @@ OrbStack can import your existing Docker Desktop containers, images and volumes 
 
 ## Running on a low-spec machine
 
-The stack is built for laptops, but Docker itself needs headroom. Rough guide:
+The stack is built for everyday devices, but Docker itself needs headroom. Rough guide:
 
 | RAM given to Docker | What runs comfortably |
 | --- | --- |
@@ -161,7 +161,7 @@ Images are the big cost — the full stack is ~14 GB. To keep it small:
 - **`make prune`** removes dangling images and build cache. Safe: it doesn't touch your other images or any data.
 - **`make uninstall`** removes this stack's containers, data and images — everything it put on your disk.
 - **Logs and history are capped**: Kafka keeps messages 24 h (`KAFKA_RETENTION_HOURS`), Loki keeps logs 3 days, Prometheus keeps metrics 3 days (`PROMETHEUS_RETENTION`), Mailpit keeps the last 5,000 emails (`MAILPIT_MAX_MESSAGES`).
-- **Elasticsearch won't go read-only** when your disk is >90% full (its usual safety switch is off here, since that's normal on a laptop).
+- **Elasticsearch won't go read-only** when your disk is >90% full (its usual safety switch is off here, since that's normal on a development machine).
 - **Biggest images**: `search` (~4 GB), `observability` (~3.3 GB), `postgres` (~1.6 GB, PostGIS), `mongo` (~1.6 GB).
 - On a Mac, Docker keeps images inside one virtual disk file. [OrbStack](#which-docker-app) shrinks it automatically after you delete images (give it a few minutes); Docker Desktop may take longer to give the space back.
 
