@@ -60,7 +60,7 @@ services:
   redis:
     <<: *restart
     container_name: redis
-    image: redis:8.6-alpine
+    image: redis:8.12-alpine
     profiles: [redis]
     command:
       - redis-server
@@ -186,7 +186,7 @@ services:
   mongo:
     <<: *restart
     container_name: mongo
-    image: mongo:8.0
+    image: mongo:8.3
     profiles: [mongo]
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-mongo}
@@ -407,7 +407,7 @@ services:
   loki:
     <<: *restart
     container_name: loki
-    image: grafana/loki:3.7.9
+    image: grafana/loki:3.7.10
     profiles: [observability]
     command: ["-config.file=/etc/loki/config.yaml"]
     ports:
@@ -436,7 +436,7 @@ services:
   grafana:
     <<: *restart
     container_name: grafana
-    image: grafana/grafana:13.2.7
+    image: grafana/grafana:13.3.2
     profiles: [observability]
     environment:
       GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-admin}
